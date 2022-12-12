@@ -22,8 +22,8 @@ Java_com_example_nativeopencvandroidtemplate_MainActivity_adaptiveThresholdFromJ
     clock_t begin = clock();
 
     //orb(mat);
-    //fast(mat);
-    sift(mat);
+    fast(mat);
+    //sift(mat);
 
     // log computation time to Android Logcat
     double totalTime = double(clock() - begin) / CLOCKS_PER_SEC;
