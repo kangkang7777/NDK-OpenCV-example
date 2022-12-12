@@ -1,13 +1,18 @@
 package com.example.nativeopencvandroidtemplate;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
+
+import android.os.Handler;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +30,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
     private CameraBridgeViewBase mOpenCvCameraView;
 
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+    private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             if (status == LoaderCallbackInterface.SUCCESS) {
@@ -58,11 +63,24 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
         setContentView(R.layout.activity_main);
 
+        final Handler handler = new Handler();
+        handler.post( new Runnable(){
+            @SuppressLint("SetTextI18n")
+            public void run() {
+                final TextView text= (TextView)findViewById(R.id.textView);
+                text.setTextColor(Color.parseColor("#FFFFFF"));
+                text.setTextSize(30);
+                text.setText(getTime() + " ms");
+                handler.postDelayed(this, 100);
+            }
+        });
+
         mOpenCvCameraView = findViewById(R.id.main_surface);
 
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 
         mOpenCvCameraView.setCvCameraViewListener(this);
+
 
     }
 
@@ -122,11 +140,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
         // get current camera frame as OpenCV Mat object
         Mat mat = frame.rgba();
         // native call to process current camera frame
-        adaptiveThresholdFromJNI(mat.getNativeObjAddr());
+        imageProc(mat.getNativeObjAddr());
 
         // return processed frame for live preview
         return mat;
     }
 
-    private native void adaptiveThresholdFromJNI(long mat);
+    private native void imageProc(long mat);
+    private native int getTime();
 }

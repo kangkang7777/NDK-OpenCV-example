@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Native OpenCv Android template</string>
+    <string name="test">TextView</string>
 </resources>
