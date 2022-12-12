@@ -14,17 +14,15 @@ void sift(cv::Mat &mat);
 
 extern "C" {
 void JNICALL
-Java_com_example_nativeopencvandroidtemplate_MainActivity_adaptiveThresholdFromJNI(JNIEnv *env,
-                                                                                   jobject instance,
-                                                                                   jlong matAddr) {
+Java_com_example_nativeopencvandroidtemplate_MainActivity_adaptiveThresholdFromJNI(JNIEnv *env,jobject instance,jlong matAddr) {
 
     // get Mat from raw address
     cv::Mat &mat = *(cv::Mat *) matAddr;
 
     clock_t begin = clock();
 
-    orb(mat);
-    fast(mat);
+    //orb(mat);
+    //fast(mat);
     sift(mat);
 
     // log computation time to Android Logcat

@@ -45,7 +45,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "called onCreate");
         super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // Permissions for Android 6+
         ActivityCompat.requestPermissions(
@@ -107,8 +109,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        width = 1080;
-        height = 1920;
+
         Log.d(TAG, "  width:" + String.valueOf(width) + "  height" + String.valueOf(width));
     }
 
