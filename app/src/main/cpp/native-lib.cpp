@@ -30,10 +30,10 @@ Java_com_example_nativeopencvandroidtemplate_MainActivity_imageProc(JNIEnv *env,
 
     clock_t begin = clock();
 
-    //calcHist(mat);
+    calcHist(mat);
     //hough(mat);
     //orb(mat);
-    fast(mat);
+    //fast(mat);
     //sift(mat);
 
     // log computation time to Android Logcat
@@ -41,7 +41,7 @@ Java_com_example_nativeopencvandroidtemplate_MainActivity_imageProc(JNIEnv *env,
     __android_log_print(ANDROID_LOG_INFO, TAG, "computation time = %f seconds\n",
                         totalTime);
     avgTime = totalTime*1000;
-    
+
 }
 
 }

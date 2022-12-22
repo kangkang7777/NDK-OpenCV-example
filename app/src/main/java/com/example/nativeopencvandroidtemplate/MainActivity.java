@@ -5,6 +5,10 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 
@@ -24,7 +28,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
-public class MainActivity extends Activity implements CvCameraViewListener2 {
+public class MainActivity extends Activity implements CvCameraViewListener2, SensorEventListener {
     private static final String TAG = "MainActivity";
     private static final int CAMERA_PERMISSION_REQUEST = 1;
 
@@ -63,11 +67,24 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
         setContentView(R.layout.activity_main);
 
+        //sensor
+        SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        if (sensorManager!=null) {
+            Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            if(accelerometer!=null){
+                sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+            }
+        }else{
+            Toast.makeText(this, "Sensor service is not detected", Toast.LENGTH_SHORT).show();
+        }
+
+        //show frame
         final Handler handler = new Handler();
         handler.post( new Runnable(){
             @SuppressLint("SetTextI18n")
             public void run() {
-                final TextView text= (TextView)findViewById(R.id.textView);
+                final TextView text= (TextView)findViewById(R.id.frameView);
                 text.setTextColor(Color.parseColor("#FFFFFF"));
                 text.setTextSize(30);
                 text.setText(getTime() + " ms");
@@ -146,6 +163,20 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
         return mat;
     }
 
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            ((TextView)findViewById(R.id.sensorView)).setText("X:" + sensorEvent.values[0] +"\n"+ "Y:" + sensorEvent.values[1] +"\n"+ " Z: " + sensorEvent.values[2]);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+
     private native void imageProc(long mat);
     private native int getTime();
+
 }
