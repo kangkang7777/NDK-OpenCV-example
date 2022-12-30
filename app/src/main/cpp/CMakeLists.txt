@@ -5,9 +5,20 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
-include_directories(${OpenCV_DIR}/jni/include)
-add_library( lib_opencv SHARED IMPORTED )
+set(Boost_INCLUDE_DIR D://workplace//library//ndk_25_boost_1.79.0//include)
+set(Boost_LIBRARIES D://workplace//library//ndk_25_boost_1.79.0//libs)
+
+#find_package(Boost COMPONENTS system filesystem REQUIRED)
+
+include_directories(
+        ${OpenCV_DIR}/jni/include
+        ${Boost_INCLUDE_DIR}
+)
+
+add_library(lib_opencv SHARED IMPORTED)
+
 set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${OpenCV_DIR}/libs/${ANDROID_ABI}/libopencv_java4.so)
+
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -22,6 +33,14 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         native-lib.cpp)
+
+add_library(boost_chrono SHARED IMPORTED)
+
+add_library (boost_system SHARED IMPORTED)
+
+set_target_properties(boost_chrono PROPERTIES IMPORTED_LOCATION ${Boost_LIBRARIES}/${ANDROID_ABI}/libboost_chrono.so)
+
+set_target_properties(boost_system PROPERTIES IMPORTED_LOCATION ${Boost_LIBRARIES}/${ANDROID_ABI}/libboost_system.so)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -45,6 +64,9 @@ target_link_libraries( # Specifies the target library.
 
         lib_opencv
 
+        boost_system
+
+        boost_chrono
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib})
