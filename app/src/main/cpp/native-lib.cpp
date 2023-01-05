@@ -4,9 +4,15 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include "include/rest_rpc.hpp"
+#include <chrono>
+#include <fstream>
 #define TAG "NativeLib"
 
 using namespace std;
+
+using namespace rest_rpc;
+using namespace rest_rpc::rpc_service;
 
 double avgTime = 0;
 void calcHist(cv::Mat &mat);
@@ -15,6 +21,7 @@ void orb(cv::Mat &mat);
 void fast(cv::Mat &mat);
 void sift(cv::Mat &mat);
 
+
 extern "C" {
 
 int JNICALL
@@ -22,15 +29,54 @@ Java_com_example_nativeopencvandroidtemplate_MainActivity_getTime(JNIEnv *env,jo
     return (int)avgTime;
 }
 
+jboolean JNICALL
+Java_com_example_nativeopencvandroidtemplate_MainActivity_rpcClientInit(JNIEnv *env,jobject instance) {
+
+    rpc_client client("192.168.0.106", 9000);
+    bool r = client.connect(1);
+    if (!r) {
+        std::cout << "connect timeout" << std::endl;
+        return false;
+    }
+    return true;
+}
+
 void JNICALL
-Java_com_example_nativeopencvandroidtemplate_MainActivity_imageProc(JNIEnv *env,jobject instance,jlong matAddr) {
+Java_com_example_nativeopencvandroidtemplate_MainActivity_imageTrans(JNIEnv *env,jobject instance, jlong matAddr) {
+    // get Mat from raw address
+//    cv::Mat &mat = *(cv::Mat *) matAddr;
+//    vector<uchar> temp;
+//    std::string file;
+//    cv::imencode(".jpg", mat, temp);
+//    temp.assign(file.begin(), file.end());
+
+
+//    bool r = client.connect(1);
+//    if (!r) {
+//        std::cout << "connect timeout" << std::endl;
+//        return;
+//    }
+
+//    auto f = client.async_call<FUTURE>("upload", "test", file);
+//    if (f.wait_for(std::chrono::milliseconds(500)) == std::future_status::timeout) {
+//        std::cout << "timeout" << std::endl;
+//    }
+//    else {
+//        f.get().as();
+//        std::cout << "ok" << std::endl;
+//    }
+
+}
+
+void JNICALL
+Java_com_example_nativeopencvandroidtemplate_MainActivity_imageProc(JNIEnv *env,jobject instance, jlong matAddr) {
 
     // get Mat from raw address
     cv::Mat &mat = *(cv::Mat *) matAddr;
 
     clock_t begin = clock();
 
-    calcHist(mat);
+    //calcHist(mat);
     //hough(mat);
     //orb(mat);
     //fast(mat);

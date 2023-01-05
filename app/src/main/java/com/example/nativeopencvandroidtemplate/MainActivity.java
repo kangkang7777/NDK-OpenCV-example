@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat;
 import android.os.Handler;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,12 +28,21 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+import org.restrpc.client.NativeRpcClient;
+import org.restrpc.client.RpcClient;
+
+import java.util.ArrayList;
+import java.util.Formatter;
+import java.util.List;
 
 public class MainActivity extends Activity implements CvCameraViewListener2, SensorEventListener {
     private static final String TAG = "MainActivity";
     private static final int CAMERA_PERMISSION_REQUEST = 1;
 
     private CameraBridgeViewBase mOpenCvCameraView;
+    private SensorManager sensorManager;
+    float[] gravity, geomagnetic, rotationVector;
+    boolean enableView = true;
 
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -50,6 +60,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2, Sen
         }
     };
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "called onCreate");
@@ -68,16 +79,44 @@ public class MainActivity extends Activity implements CvCameraViewListener2, Sen
         setContentView(R.layout.activity_main);
 
         //sensor
-        SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (sensorManager!=null) {
             Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            if(accelerometer!=null){
+            Sensor gravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+            Sensor linearAcc = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+            Sensor gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+            Sensor Geomagnetic = sensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
+            Sensor orientation = sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+            Sensor light = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+            if(accelerometer != null){
                 sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, linearAcc, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, Geomagnetic, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, orientation, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, light, SensorManager.SENSOR_DELAY_NORMAL);
             }
+
         }else{
             Toast.makeText(this, "Sensor service is not detected", Toast.LENGTH_SHORT).show();
         }
+
+        //set text
+        List<View> views = new ArrayList<>();
+        views.add(findViewById(R.id.sensorGraView));
+        views.add(findViewById(R.id.sensorAccView));
+        views.add(findViewById(R.id.sensorGyroView));
+        views.add(findViewById(R.id.sensorOrientView));
+        views.add(findViewById(R.id.sensorLinearAccView));
+        views.add(findViewById(R.id.sensorMagView));
+        views.add(findViewById(R.id.orientation));
+        for(View each : views)
+        {
+            ((TextView)each).setTextColor(Color.parseColor("#FFFFFF"));
+            ((TextView)each).setText("");
+        }
+
 
         //show frame
         final Handler handler = new Handler();
@@ -92,12 +131,21 @@ public class MainActivity extends Activity implements CvCameraViewListener2, Sen
             }
         });
 
+
+//        if(rpcClientInit())
+//            text.setText("true");
+//        else
+//            text.setText("false");
+
         mOpenCvCameraView = findViewById(R.id.main_surface);
 
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 
         mOpenCvCameraView.setCvCameraViewListener(this);
 
+//        RpcClient rpcClient = new NativeRpcClient();
+//        // Connect to the C++ RPC server which is listening on `127.0.0.1:9000`.
+//        rpcClient.connect("127.0.0.1:9000");
 
     }
 
@@ -140,6 +188,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2, Sen
         super.onDestroy();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
+
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
     }
 
     @Override
@@ -152,22 +204,90 @@ public class MainActivity extends Activity implements CvCameraViewListener2, Sen
     public void onCameraViewStopped() {
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public Mat onCameraFrame(CvCameraViewFrame frame) {
         // get current camera frame as OpenCV Mat object
         Mat mat = frame.rgba();
         // native call to process current camera frame
-        imageProc(mat.getNativeObjAddr());
+        //imageProc(mat.getNativeObjAddr());
+        //imageTrans(mat.getNativeObjAddr());
+
+
+
 
         // return processed frame for live preview
         return mat;
     }
 
+    @SuppressLint({"SetTextI18n", "DefaultLocale"})
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        if(!enableView)
+            return;
+        float[] r = new float[9];
+        float[] I = new float[9];
+        float[] values = new float[3];
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            ((TextView)findViewById(R.id.sensorView)).setText("X:" + sensorEvent.values[0] +"\n"+ "Y:" + sensorEvent.values[1] +"\n"+ " Z: " + sensorEvent.values[2]);
+            ((TextView)findViewById(R.id.sensorAccView)).setText("Acceleration \nX:" + String.format("%.2f", sensorEvent.values[0]) +"\n"+ "Y:" + String.format("%.2f", sensorEvent.values[1]) +"\n"+ " Z: " + String.format("%.2f", sensorEvent.values[2]));
         }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
+            ((TextView)findViewById(R.id.sensorLinearAccView)).setText("线性加速度 \nX:" + String.format("%.2f", sensorEvent.values[0]) +"\n"+ "Y:" + String.format("%.2f", sensorEvent.values[1]) +"\n"+ " Z: " + String.format("%.2f", sensorEvent.values[2]));
+        }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_GRAVITY) {
+            ((TextView)findViewById(R.id.sensorGraView)).setText("Gravity \nX:" + String.format("%.2f", sensorEvent.values[0]) +"\n"+ "Y:" + String.format("%.2f", sensorEvent.values[1]) +"\n"+ " Z: " + String.format("%.2f", sensorEvent.values[2]));
+            gravity = sensorEvent.values;
+        }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            rotationVector = sensorEvent.values;
+            ((TextView)findViewById(R.id.sensorGyroView)).setText("Gyroscope \nX:" + String.format("%.2f", sensorEvent.values[0]) +"\n"+ "Y:" + String.format("%.2f", sensorEvent.values[1]) +"\n"+ " Z: " + String.format("%.2f", sensorEvent.values[2]));
+        }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR) {
+            geomagnetic = sensorEvent.values;
+        }
+        else if (sensorEvent.sensor.getType() == Sensor.TYPE_LIGHT) {
+//            geomagnetic = sensorEvent.values;
+        }
+
+
+        if(gravity!=null && geomagnetic!=null && rotationVector!=null)
+        {
+            SensorManager.getRotationMatrixFromVector(r, rotationVector);
+            for(int i=0; i<r.length ;i++)
+            {
+                r[i] = Float.parseFloat(String.format("%.3f", r[i]));
+            }
+            ((TextView)findViewById(R.id.sensorGyroView)).setText("RotationMatrix\n by gyroscope \n" + r[0] + " " + r[1] + " " + r[2] +
+                    "\n" + r[3] + " " + r[4] + " " + r[5] + "\n" +
+                    r[6] + " " + r[7] + " " + r[8] +"\n" );
+
+            SensorManager.getRotationMatrix(r, I, gravity, geomagnetic);
+
+            SensorManager.getOrientation(r, values);
+            for(int i=0; i<values.length ;i++)
+            {
+                values[i] = Float.parseFloat(String.format("%.3f", values[i]));
+            }
+            ((TextView)findViewById(R.id.orientation)).setText("Rotation angles \n" +  values[0] + " " + values[1] + " " +  values[2]);
+
+            for(int i=0; i<r.length ;i++)
+            {
+                r[i] = Float.parseFloat(String.format("%.3f", r[i]));
+            }
+            for(int i=0; i<I.length ;i++)
+            {
+                I[i] = Float.parseFloat(String.format("%.3f", I[i]));
+            }
+
+            ((TextView)findViewById(R.id.sensorOrientView)).setText("RotationMatrix\n by gravity \n" + r[0] + " " + r[1] + " " + r[2] +
+                                                                                    "\n" + r[3] + " " + r[4] + " " + r[5] + "\n" +
+                                                                                            r[6] + " " + r[7] + " " + r[8] +"\n" );
+            ((TextView)findViewById(R.id.sensorMagView)).setText("RotationMatrix \n by geomagnetic \n" + I[0] + " " + I[1] + " " + I[2] +
+                    "\n" + I[3] + " " + I[4] + " " + I[5] + "\n" +
+                    I[6] + " " + I[7] + " " + I[8] +"\n" );
+        }
+        //SensorManager.getOrientation(r, values);
+
     }
 
     @Override
@@ -175,8 +295,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2, Sen
 
     }
 
-
+    private native boolean rpcClientInit();
     private native void imageProc(long mat);
+    private native void imageTrans(long mat);
     private native int getTime();
 
 }

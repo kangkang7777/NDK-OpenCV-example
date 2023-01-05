@@ -5,19 +5,29 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+
 set(Boost_INCLUDE_DIR D://workplace//library//ndk_25_boost_1.79.0//include)
 set(Boost_LIBRARIES D://workplace//library//ndk_25_boost_1.79.0//libs)
 
+set(rpc_lib D://workplace//activeProject//NDK-OpenCV-example//app//src//main//java//org//restrpc//jni)
+
 #find_package(Boost COMPONENTS system filesystem REQUIRED)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++11")
+
 include_directories(
+        "include"
+        "thirdparty"
         ${OpenCV_DIR}/jni/include
         ${Boost_INCLUDE_DIR}
 )
 
 add_library(lib_opencv SHARED IMPORTED)
+add_library(restrpc_jni SHARED IMPORTED)
 
 set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${OpenCV_DIR}/libs/${ANDROID_ABI}/libopencv_java4.so)
+set_target_properties(restrpc_jni PROPERTIES IMPORTED_LOCATION ${rpc_lib}/restrpc_jni.lib)
+
 
 
 # Creates and names a library, sets it as either STATIC
@@ -64,6 +74,8 @@ target_link_libraries( # Specifies the target library.
 
         lib_opencv
 
+        restrpc_jni
+        
         boost_system
 
         boost_chrono
